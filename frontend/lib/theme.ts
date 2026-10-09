@@ -14,8 +14,8 @@ export function readStoredTheme(): Theme | null {
 }
 
 export function readThemeFromDocument(): Theme {
-  if (typeof document === "undefined") return "dark";
-  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+  if (typeof document === "undefined") return "light";
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
 export function applyTheme(theme: Theme) {

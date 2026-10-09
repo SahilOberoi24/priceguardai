@@ -95,7 +95,7 @@ export default function AdminPage() {
               </div>
             </div>
             <div className="panel-body kpi-grid">
-              {[["Platform", "PriceGuardrail AI · development"], ["AI model", "Claude Sonnet 4.5 · OpenRouter"], ["Demand model", "DemandModel-v2.1 · 2025-03-15"], ["SKU catalog", "28 SKUs · electromechanical locks"], ["Macro data", "Mar-2025 · composite +4.8%"], ["Guardrails", "G1–G8 · deterministic"]].map(([label, value]) => (
+              {[["Platform", "PriceGuard AI · development"], ["AI model", "Claude Sonnet 4.5 · OpenRouter"], ["Demand model", "DemandModel-v2.1 · 2025-03-15"], ["SKU catalog", "28 SKUs · electromechanical locks"], ["Macro data", "Mar-2025 · composite +4.8%"], ["Guardrails", "G1–G8 · deterministic"]].map(([label, value]) => (
                 <div className="agent-card" key={label}>
                   <div className="kpi-label">{label.toUpperCase()}</div>
                   <div style={{ marginTop: 9, fontSize: 13 }}>{value}</div>

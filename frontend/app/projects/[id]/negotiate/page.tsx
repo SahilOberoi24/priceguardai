@@ -28,7 +28,7 @@ export default function NegotiationPage() {
     event.preventDefault(); if (!question.trim() || loading) return;
     const text = question.trim(); setQuestion(""); setLoading(true); setError("");
     setMessages((items) => [...items, { role: "user", content: text }, { role: "assistant", content: "" }]);
-    const system = `You are PriceGuardrail AI, a pricing negotiation agent. Answer using only the supplied SKU facts; do not invent prices or change the deterministic recommendation. Be concise, specific, and data-driven. SKU: ${sku?.sku_id || "none"}; product: ${sku?.product_name || "none"}; current LP: $${row?.current_lp.toFixed(2) || "0.00"}; proposed change: ${row?.proposed_pct.toFixed(1) || "0.0"}%; confidence: ${((row?.confidence || 0) * 100).toFixed(0)}%; guardrails: ${(row?.guardrail_flags || []).map((flag) => `${flag.rule}: ${flag.msg}`).join("; ") || "none"}.`;
+    const system = `You are PriceGuard AI, a pricing negotiation agent. Answer using only the supplied SKU facts; do not invent prices or change the deterministic recommendation. Be concise, specific, and data-driven. SKU: ${sku?.sku_id || "none"}; product: ${sku?.product_name || "none"}; current LP: $${row?.current_lp.toFixed(2) || "0.00"}; proposed change: ${row?.proposed_pct.toFixed(1) || "0.0"}%; confidence: ${((row?.confidence || 0) * 100).toFixed(0)}%; guardrails: ${(row?.guardrail_flags || []).map((flag) => `${flag.rule}: ${flag.msg}`).join("; ") || "none"}.`;
     try {
       const response = await fetch(`${API_BASE}/api/negotiate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ system, question: text }) });
       if (!response.ok || !response.body) throw new Error("Negotiation request failed");

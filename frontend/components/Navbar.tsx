@@ -88,9 +88,9 @@ export function Navbar() {
 
   return (
     <header className="topbar">
-      <Link className="brand" href="/dashboard" aria-label="PriceGuardrail AI home">
+      <Link className="brand" href="/dashboard" aria-label="PriceGuard AI home">
         <span className="brand-mark">PG</span>
-        <span>PriceGuardrail <b>AI</b></span>
+        <span>PriceGuard <b>AI</b></span>
       </Link>
       <span className="organization-chip">{profile.brand}</span>
       <nav className="nav-links" aria-label="Main navigation">
