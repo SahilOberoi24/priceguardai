@@ -1,6 +1,6 @@
 # PRICING_AGENT_SPEC.md — PriceMind AI (Pricing Agent) Implementation Specification
 
-> **Purpose.** This is the reference for recreating the **Pricing Agent**, branded **"PriceMind AI — Agentic Pricing Committee"**, from end to end in a separate codebase. It was reverse-engineered from `priceagent/` in the `aiwithoberoi` repository.
+> **Purpose.** This is the reference for recreating the **Pricing Agent**, branded **"PriceMind AI — Agentic Pricing Committee"**, from end to end in a separate codebase. It was reverse-engineered from `priceagent/` in a source repository. **User/account identifiers have been redacted.**
 >
 > **Evidence labels used throughout:**
 > - **[CODE]**: read directly from source.
@@ -77,11 +77,11 @@ The following are ignored except where noted:
 - `priceagent/app.py`: an unrelated Flask + Supabase "todos" demo that the Pricing Agent never imports.
 - `priceagent/supabase.ipynb`: an unrelated notebook.
 - `PriceAgent_SKU_Data.xlsx` at the repository root (untracked) is **probably** the spreadsheet that `sku_data.json` was generated from **[INFERRED]**. The first element of the `guardrails` array is a spreadsheet header row. No conversion script exists in the repo.
-- `priceagent/README.md` and `START.md` are **outdated**. They mention an Anthropic key and a different four-agent lineup ("Builder/Critic/Coding/Executor"). **Follow the code, not these READMEs.**
+- `priceagent/README.md` and `START.md` are **outdated**. They mention a legacy provider key and a different four-agent lineup ("Builder/Critic/Coding/Executor"). **Follow the code, not these READMEs.**
 
 ### 1.5 Deployment (as configured in the repo)
 
-- **Frontend:** Vercel. `priceagent/frontend/vercel.json` bakes `NEXT_PUBLIC_API_URL=https://aiwithoberoi.onrender.com` in at build time. The Vercel project name is `aiwithoberoi-hkhl` (`.vercel/project.json`, untracked). The portfolio links the live app at `https://pricemindai.vercel.app/` (`data/projects.js`) **[CODE]**.
+- **Frontend:** Vercel. `priceagent/frontend/vercel.json` bakes a deployment URL in at build time. The deployment/account URL and project identifier have been redacted. The portfolio links the live app at `https://pricemindai.vercel.app/` (`data/projects.js`) **[CODE]**.
 - **Backend:** Render (from git history: "Point frontend to Render backend"). There is **no Render config file** in the repo. The backend ships a `Dockerfile` and a `railway.toml` (Railway health check `/api/skus`). How Render is set up (Docker vs. native Python) is **[UNVERIFIED]**.
 - **Database:** PostgreSQL, through `DATABASE_URL` (driver `psycopg2-binary`). The provider is **[UNVERIFIED]**. SQLite also works and was verified locally **[RUN]**.
 
@@ -213,7 +213,7 @@ flowchart LR
 
   JSON[("sku_data.json<br/>in-memory cache")]
   DB[("PostgreSQL / SQLite<br/>projects, project_skus,<br/>review_decisions, pricing_history")]
-  OR["OpenRouter API<br/>model anthropic/claude-sonnet-4-5"]
+  OR["Configured LLM API<br/>Codex-assisted development"]
 
   Browser -- "fetch JSON (NEXT_PUBLIC_API_URL)" --> R
   PW -- "EventSource" --> SSE1
@@ -946,11 +946,11 @@ stateDiagram-v2
   - Table:
     - Header "Platform Users ({n})" plus "{k} pending invite".
     - Columns: User (initial avatar), Email, Access pill, Status ("Active" green / "Invite Sent" amber), Joined, a Change Access select, and Remove.
-  - Seed users: 3 records (admin / edit / read). The original seeds include the repository owner's real name and email. **Use placeholders** such as `Owner Admin <owner@example.com>`, `Pricing Manager <pricing@company.com>`, and `Read-only Viewer <viewer@company.com>`.
+  - Seed users: 3 records (admin / edit / read). The original seeds included personal name and email data, which is redacted. **Use placeholders** such as `Owner Admin <owner@example.com>`, `Pricing Manager <pricing@company.com>`, and `Read-only Viewer <viewer@company.com>`.
 - **System tab:**
   - "Platform Information" key/value grid:
     - Platform: "PriceMind AI v1.0 POC"
-    - AI Model: "Claude Sonnet 4.5 (via OpenRouter)"
+    - Runtime LLM: "Configured model · Codex-assisted development"
     - DS Model: "DemandModel-v2.1 (2025-03-15)"
     - SKU Catalog: "28 SKUs — Assa Abloy Electromechanical"
     - Macro Data: "Mar-2025 YoY · Composite +4.8%"
@@ -1595,8 +1595,9 @@ Format: SKU · DS base · proposed · new LP · cur margin → new margin · upl
 
 ```python
 from openai import AsyncOpenAI
-client = AsyncOpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("OPENROUTER_API_KEY"))
-MODEL = "anthropic/claude-sonnet-4-5"
+# Codex is the development assistant; this is the app's configurable runtime LLM.
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 ```
 
 | Call | Function | Stream | max_tokens | Messages |
@@ -2032,7 +2033,7 @@ Transaction boundaries: one session per request, with a single `commit()` at the
 
 | Integration | Purpose | Mandatory? | Config | Auth | Failure behavior |
 |---|---|---|---|---|---|
-| **OpenRouter** (`https://openrouter.ai/api/v1`, OpenAI-compatible Chat Completions) | All LLM calls; model `anthropic/claude-sonnet-4-5` | Needed for committee/summary/executor/negotiation. **Required at startup** (client constructed at import) | `OPENROUTER_API_KEY` | Bearer key via the openai SDK | §12.7 |
+| **Configured LLM provider** (OpenAI-compatible API) | Committee, summary, executor, and negotiation calls; model configured by `OPENAI_MODEL` | Required for live LLM mode | `OPENAI_API_KEY` or a compatible provider key | Provider API key | §12.7 |
 | **PostgreSQL** (prod) / any SQLAlchemy URL | Project persistence | **Required at startup** | `DATABASE_URL` (e.g. `postgresql://…`; SQLite `sqlite:///file.db` works) | in URL | startup `RuntimeError` if unset; request errors → 500 |
 | Vercel | Frontend hosting | deploy only | `NEXT_PUBLIC_API_URL` (build-time) | — | — |
 | Render (or Railway / Docker) | Backend hosting | deploy only | `PORT` (Dockerfile uses `${PORT:-8000}`) | — | — |
@@ -2155,9 +2156,9 @@ There's no test command, no type-check script (use `npx tsc --noEmit`), and no f
 Ports: API on 8000, UI on 3000. Railway health check: `GET /api/skus` (30 s timeout, restart on failure).
 
 Known setup issues:
-- `start.bat` hard-codes `e:\Sahil\…` paths.
-- The READMEs mention an Anthropic key and outdated pip packages. Ignore them.
-- Missing `DATABASE_URL` or `OPENROUTER_API_KEY` stops the backend from starting.
+- `start.bat` hard-codes a user-specific local path (redacted).
+- The READMEs mention a legacy provider key and outdated pip packages. Ignore them.
+- Missing `DATABASE_URL` or both `OPENAI_API_KEY` and `OPENROUTER_API_KEY` stops the backend from starting in live LLM mode.
 
 ---
 
@@ -2340,7 +2341,7 @@ ESLint status [RUN]: 6 errors, 15 warnings.
 | `priceagent/frontend/lib/auth.ts` | 34 | mock auth |
 | `priceagent/frontend/app/page.tsx` | 91 | login |
 | `priceagent/frontend/app/layout.tsx`, `globals.css` | 18 / 27 | shell / styles |
-| `priceagent/frontend/vercel.json` | 10 | `{"framework":"nextjs","buildCommand":"npm run build","outputDirectory":".next","build":{"env":{"NEXT_PUBLIC_API_URL":"https://aiwithoberoi.onrender.com"}}}` |
+| `priceagent/frontend/vercel.json` | 10 | `{"framework":"nextjs","buildCommand":"npm run build","outputDirectory":".next","build":{"env":{"NEXT_PUBLIC_API_URL":"[REDACTED DEPLOYMENT URL]"}}}` |
 | `priceagent/package.json` | 12 | concurrently dev runner |
 
 ### 21.2 Assets
@@ -2396,7 +2397,7 @@ The replica drops the `priceagent/` prefix. `backend/` and `frontend/` sit at th
 All LLM access goes through one module, `backend/llm.py`, which exposes:
 
 ```python
-MODEL = "anthropic/claude-sonnet-4-5"
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Codex-assisted development; configurable runtime model.
 async def stream_text(messages: list[dict], max_tokens: int) -> AsyncIterator[str]   # yields text deltas
 async def complete_text(messages: list[dict], max_tokens: int) -> str                 # non-streaming
 ```
