@@ -10,9 +10,44 @@ The reference document, reconstructed workbook catalog, FastAPI API, and initial
 
 See [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md) for the current build checklist and blockers.
 
-## Backend
+## Local setup and run
 
-The API source is under `backend/`. The Next.js application is under `frontend/`. Use Python 3.11 and Node.js 20.9+, install `backend/requirements.txt`, `npm install` at the repository root, and `npm install` in `frontend/`. Copy `backend/.env.example` to `backend/.env`, then run `npm run dev` from the repository root. Set `LLM_MODE=mock` for deterministic local agent output; live mode uses OpenRouter.
+The API source is under `backend/`, and the Next.js application is under `frontend/`. You need Python 3.11, Node.js 20.9 or newer, and npm.
+
+1. Create and activate a Python virtual environment from the repository root:
+
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   ```
+
+   On macOS or Linux, activate it with `source .venv/bin/activate`.
+
+2. Install the backend and frontend dependencies:
+
+   ```powershell
+   python -m pip install -r backend/requirements.txt
+   npm install
+   npm --prefix frontend install
+   ```
+
+3. Create the backend environment file and configure it for an offline local run:
+
+   ```powershell
+   Copy-Item backend/.env.example backend/.env
+   ```
+
+   In `backend/.env`, set `LLM_MODE=mock`. The example file already configures a local SQLite database. Mock mode provides deterministic agent output without an API key. For live LLM responses, set `LLM_MODE=live` and provide `OPENAI_API_KEY` (or `OPENROUTER_API_KEY`).
+
+4. Start both the API and web application from the repository root:
+
+   ```powershell
+   npm run dev
+   ```
+
+   Open the web app at [http://localhost:3000](http://localhost:3000). The API is at [http://localhost:8000](http://localhost:8000), and its interactive documentation is at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+The frontend defaults to `http://localhost:8000` for the API. To override it, copy `frontend/.env.example` to `frontend/.env.local` and change `NEXT_PUBLIC_API_URL`.
 
 To regenerate the catalog from the shared workbook, run `python backend/import_catalog.py PriceAgent_SKU_Data.xlsx` from the repository root.
 
