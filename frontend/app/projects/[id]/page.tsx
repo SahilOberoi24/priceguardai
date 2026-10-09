@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Navbar } from "@/components/Navbar";
+import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { API_BASE, api, PreviewRow, Project } from "@/lib/api";
 
 type Phase = "idle" | "running" | "awaiting_review" | "executing" | "complete";
@@ -103,13 +103,13 @@ export default function ProjectWorkspace() {
     finally { setChatLoading(false); }
   }
 
-  if (!project && !error) return <><Navbar /><main className="page"><div className="empty">Loading pricing project…</div></main></>;
-  if (!project) return <><Navbar /><main className="page"><div className="error">{error}</div><Link href="/projects" className="button">← Back to projects</Link></main></>;
+  if (!project && !error) return <WorkspaceShell><main className="page"><div className="empty">Loading pricing project…</div></main></WorkspaceShell>;
+  if (!project) return <WorkspaceShell><main className="page"><div className="error">{error}</div><Link href="/projects" className="button">← Back to projects</Link></main></WorkspaceShell>;
 
   const phaseLabel = phase === "awaiting_review" ? "Human review" : phase === "complete" ? "Execution complete" : phase === "running" ? "Committee running" : phase === "executing" ? "Applying approved prices" : "Ready to price";
   const avgDsBase = rows.length ? rows.reduce((sum, row) => sum + (row.ds_base_pct ?? 0), 0) / rows.length : 0;
   const avgMacroDelta = rows.length ? rows.reduce((sum, row) => sum + (row.macro_delta_pct ?? 0), 0) / rows.length : 0;
-  return <><Navbar /><main className="page">
+  return <WorkspaceShell><main className="page">
     <div className="page-head"><div><div className="eyebrow">Pricing project · {project.id}</div><h1>{project.name}</h1><p className="subtext">{project.skus.length} SKUs · Review by {project.end_date || "not set"}</p></div><div className="inline"><span className={`badge ${phase === "complete" ? "green" : phase === "running" || phase === "executing" ? "amber" : "blue"}`}>{phaseLabel}</span><Link className="button ghost" href="/projects">← Projects</Link></div></div>
     {error && <div className="error">{error}</div>}
     <section className="kpi-grid">
@@ -127,6 +127,6 @@ export default function ProjectWorkspace() {
       {rows.length === 0 ? <div className="empty">Run the committee or choose Price manually to generate the pricing preview.</div> : <div className="table-wrap"><table><thead><tr><th>SKU</th><th>Current LP</th><th>Proposed</th><th>Final increase</th><th>New LP</th><th>New margin</th><th>12-mo uplift</th><th>Guardrails</th></tr></thead><tbody>{rows.map((row) => { const finalPct = Number.parseFloat(overrides[row.sku_id] || "") || row.proposed_pct; return <tr key={row.sku_id}><td><b className="mono">{row.sku_id}</b><div className="muted" style={{ marginTop: 4 }}>{row.product_name}</div></td><td>${row.current_lp.toFixed(2)}</td><td>{row.proposed_pct.toFixed(1)}%</td><td>{phase === "complete" ? <b>{(project.review_decisions?.[row.sku_id] ?? row.proposed_pct).toFixed(1)}%</b> : <input aria-label={`Final increase for ${row.sku_id}`} className="control" style={{ width: 90, minWidth: 0 }} type="number" min="0" max="15" step="0.1" value={overrides[row.sku_id] ?? row.proposed_pct} onChange={(e) => setOverrides((value) => ({ ...value, [row.sku_id]: e.target.value }))} />}</td><td>${(row.current_lp * (1 + finalPct / 100)).toFixed(2)}</td><td>{(row.new_margin_pct * 100).toFixed(1)}%</td><td className="positive">${row.revenue_uplift.toLocaleString()}</td><td>{row.guardrail_flags.length ? row.guardrail_flags.map((flag) => <span key={flag.rule} title={flag.msg} className={`badge ${flag.type === "Hard Block" ? "red" : flag.type === "Info" ? "blue" : "amber"}`} style={{ margin: 2 }}>{flag.rule}</span>) : <span className="muted">—</span>}</td></tr>; })}</tbody></table></div>}
     </section>
     {agentText.executor && <section className="panel" style={{ marginBottom: 18 }}><div className="panel-head"><h2>Executor confirmation</h2></div><div className="panel-body agent-text">{agentText.executor}</div></section>}
-    {rows.length > 0 && <section className="panel"><div className="panel-head"><div><h2>Negotiation agent</h2><div className="subtext">Ask about drivers, risk, or alternatives for this project.</div></div></div><div className="panel-body"><div style={{ maxHeight: 240, overflow: "auto", display: "grid", gap: 10, marginBottom: 12 }}>{chat.map((item, index) => <div key={`${index}-${item.role}`} className="agent-card" style={{ borderColor: item.role === "user" ? "#31588c" : undefined }}><div className="muted" style={{ fontSize: 9, marginBottom: 5 }}>{item.role === "user" ? "YOU" : "PRICING AGENT"}</div><div style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>{item.content || "…"}</div></div>)}</div><form className="inline" onSubmit={sendChat}><input className="control" style={{ flex: 1 }} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ask why this increase was proposed…"/><button className="button primary" disabled={chatLoading || !message.trim()}>{chatLoading ? "Sending…" : "Send"}</button></form></div></section>}
-  </main></>;
+    {rows.length > 0 && <section className="panel"><div className="panel-head"><div><h2>Negotiation agent</h2><div className="subtext">Ask about drivers, risk, or alternatives for this project.</div></div></div><div className="panel-body"><div style={{ maxHeight: 240, overflow: "auto", display: "grid", gap: 10, marginBottom: 12 }}>{chat.map((item, index) => <div key={`${index}-${item.role}`} className={`agent-card${item.role === "user" ? " agent-user" : ""}`}><div className="muted" style={{ fontSize: 9, marginBottom: 5 }}>{item.role === "user" ? "YOU" : "PRICING AGENT"}</div><div style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>{item.content || "…"}</div></div>)}</div><form className="inline" onSubmit={sendChat}><input className="control" style={{ flex: 1 }} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ask why this increase was proposed…"/><button className="button primary" disabled={chatLoading || !message.trim()}>{chatLoading ? "Sending…" : "Send"}</button></form></div></section>}
+  </main></WorkspaceShell>;
 }

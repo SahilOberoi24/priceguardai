@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Navbar } from "@/components/Navbar";
+import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { api, SKU } from "@/lib/api";
 
 export default function DashboardPage() {
@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   const newProjectHref = selected.length ? `/projects/new?sku_ids=${encodeURIComponent(selected.join(","))}` : "/projects/new";
 
-  return <><Navbar /><main className="page explorer-page">
+  return <WorkspaceShell><main className="page explorer-page">
     <div className="page-head"><div><h1>SKU Explorer</h1><p className="subtext">Organization 1 · {loading ? "Loading catalog…" : `${skus.length} SKUs loaded`} · Select to build a pricing project</p></div><Link className="button primary new-project-button" href="/projects/new">＋ New Project</Link></div>
     <details className="signal-strip"><summary><span className="signal-icon">♟</span><strong>Macro Cost Signals</strong><span>Composite pressure: <b>+4.8%</b> · Mar-25</span><span>CPI (YoY): <b>+3.2%</b></span><span>PPI Metals: <b>+4.8%</b></span><span>Steel Index: <b>+6.1%</b></span><span>Zinc Spot: <b>+2.9%</b></span><span>+4 more…</span></summary><div className="signal-more">Macro indicators provide an at-a-glance view of input-cost pressure.</div></details>
     {error && <div className="error">{error}</div>}
@@ -56,5 +56,5 @@ export default function DashboardPage() {
       </tbody></table>{loading && <div className="empty">Loading catalog…</div>}{!loading && shown.length === 0 && <div className="empty">No SKUs match these filters.</div>}</div>
       <div className="panel-head"><span className="muted">Showing {shown.length} of {skus.length} SKUs</span><Link className="button primary" href="/projects/new">Create pricing project →</Link></div>
     </section>
-  </main></>;
+  </main></WorkspaceShell>;
 }
