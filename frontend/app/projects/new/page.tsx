@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Navbar } from "@/components/Navbar";
+import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { api, SKU } from "@/lib/api";
 
 export default function NewProjectPage() {
@@ -64,7 +64,7 @@ export default function NewProjectPage() {
   }
   const selectAll = () => setSelected((current) => Array.from(new Set([...current, ...shown.map((sku) => sku.sku_id)])));
 
-  return <><Navbar /><main className="page project-page">
+  return <WorkspaceShell><main className="page project-page">
     <div className="project-breadcrumb"><Link href="/projects">← Projects</Link><span>/</span><h1>New Pricing Project</h1></div>
     {error && <div className="error">{error}</div>}
     <div className="project-layout">
@@ -88,5 +88,5 @@ export default function NewProjectPage() {
         <button className="button primary launch-button" disabled={saving || loading || !name.trim() || targetRevenue === "" || !Number.isFinite(Number(targetRevenue)) || Number(targetRevenue) < 0 || !startDate || !endDate || endDate <= startDate || !selected.length} onClick={createProject}>{saving ? "Creating project…" : "Create and Launch"}</button>
       </aside>
     </div>
-  </main></>;
+  </main></WorkspaceShell>;
 }

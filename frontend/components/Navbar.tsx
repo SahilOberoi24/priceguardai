@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api, Project } from "@/lib/api";
-
-type UserProfile = { name: string; role: string; organization: string; avatar: string };
-type Theme = "dark" | "light";
+import { clearSession, getSession, type SessionUser } from "@/lib/auth";
+import { useTheme } from "@/components/ThemeProvider";
 
 function projectNotice(project: Project): { title: string; detail: string } {
   switch (project.status) {
@@ -23,36 +22,50 @@ function BellIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>;
 }
 
+function SunIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
+    </svg>
+  );
+}
+
 export function Navbar() {
   const pathname = usePathname();
-  const [profile, setProfile] = useState<UserProfile>({ name: "Admin", role: "Pricing Admin", organization: "Organization 1", avatar: "PG" });
+  const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const [profile, setProfile] = useState<SessionUser>({ name: "Admin", role: "Pricing Admin", brand: "Organization 1", avatar: "PG" });
   const [projects, setProjects] = useState<Project[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [theme, setTheme] = useState<Theme>("dark");
   const [readIds, setReadIds] = useState<string[]>([]);
 
   useEffect(() => {
+    const session = getSession();
+    if (session) setProfile(session);
     try {
-      const saved = localStorage.getItem("priceguardrail_user");
-      if (saved) {
-        const user = JSON.parse(saved) as { name?: string; role?: string; brand?: string; avatar?: string };
-        setProfile({ name: user.name || "Admin", role: user.role || "Pricing Admin", organization: user.brand || "Organization 1", avatar: user.avatar || "PG" });
-      }
-      const storedTheme = localStorage.getItem("priceguardrail_theme");
-      if (storedTheme === "light" || storedTheme === "dark") setTheme(storedTheme);
       const storedRead = localStorage.getItem("priceguardrail_read_notifications");
       if (storedRead) setReadIds(JSON.parse(storedRead) as string[]);
     } catch {
-      localStorage.removeItem("priceguardrail_user");
+      localStorage.removeItem("priceguardrail_read_notifications");
     }
     api.projects().then(setProjects).catch(() => setProjects([]));
   }, []);
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("priceguardrail_theme", theme);
-  }, [theme]);
+  function logout() {
+    clearSession();
+    setProfileOpen(false);
+    router.replace("/");
+  }
 
   const notices = useMemo(() => projects.map((project) => ({
     project,
@@ -79,7 +92,7 @@ export function Navbar() {
         <span className="brand-mark">PG</span>
         <span>PriceGuardrail <b>AI</b></span>
       </Link>
-      <span className="organization-chip">Organization 1</span>
+      <span className="organization-chip">{profile.brand}</span>
       <nav className="nav-links" aria-label="Main navigation">
         <Link className={pathname === "/dashboard" ? "active" : ""} href="/dashboard">SKU Explorer</Link>
         <Link className={pathname.startsWith("/projects") ? "active" : ""} href="/projects">Pricing Projects</Link>
@@ -87,8 +100,8 @@ export function Navbar() {
         <Link className={pathname === "/admin" ? "active" : ""} href="/admin">Admin</Link>
       </nav>
       <div className="nav-user">
-        <button className="theme-button" type="button" onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`} title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
-          {theme === "dark" ? <span aria-hidden="true">☼</span> : <span aria-hidden="true">☾</span>}
+        <button className="theme-button" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`} title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
+          {theme === "dark" ? <SunIcon /> : <MoonIcon />}
         </button>
         <div className="nav-popover-wrap">
           <button className="notification-button" type="button" onClick={toggleNotifications} aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`} aria-expanded={notificationsOpen}>
@@ -107,7 +120,15 @@ export function Navbar() {
           <button className="profile-button" type="button" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen}>
             <span className="profile-avatar">{profile.avatar}</span><span className="profile-copy"><strong>{profile.name}</strong><small>{profile.role}</small></span><span className="profile-chevron" aria-hidden="true">⌄</span>
           </button>
-          {profileOpen && <section className="nav-popover profile-popover" aria-label="User profile"><strong>{profile.name}</strong><span>{profile.role}</span><small>{profile.organization}</small><Link className="popover-footer" href="/settings" onClick={() => setProfileOpen(false)}>Profile &amp; settings</Link></section>}
+          {profileOpen && (
+            <section className="nav-popover profile-popover" aria-label="User profile">
+              <strong>{profile.name}</strong>
+              <span>{profile.role}</span>
+              <small>{profile.brand}</small>
+              <Link className="popover-footer" href="/settings" onClick={() => setProfileOpen(false)}>Profile &amp; settings</Link>
+              <button type="button" className="popover-logout" onClick={logout}>Log out</button>
+            </section>
+          )}
         </div>
       </div>
     </header>

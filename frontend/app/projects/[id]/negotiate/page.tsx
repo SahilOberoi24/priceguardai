@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
+import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { API_BASE, api, PreviewRow, Project } from "@/lib/api";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -38,11 +38,11 @@ export default function NegotiationPage() {
     finally { setLoading(false); }
   }
 
-  if (!project) return <><Navbar /><main className="page">{error ? <div className="error">{error}</div> : <div className="empty">Loading SKU analysis…</div>}</main></>;
-  return <><Navbar /><main className="page"><div className="page-head"><div><div className="eyebrow">Project analysis</div><h1>Negotiate with agents</h1><p className="subtext">Challenge assumptions and explore alternatives for {project.name}.</p></div><Link className="button ghost" href={`/projects/${id}`}>← Back to project</Link></div>
+  if (!project) return <WorkspaceShell><main className="page">{error ? <div className="error">{error}</div> : <div className="empty">Loading SKU analysis…</div>}</main></WorkspaceShell>;
+  return <WorkspaceShell><main className="page"><div className="page-head"><div><div className="eyebrow">Project analysis</div><h1>Negotiate with agents</h1><p className="subtext">Challenge assumptions and explore alternatives for {project.name}.</p></div><Link className="button ghost" href={`/projects/${id}`}>← Back to project</Link></div>
     {error && <div className="error">{error}</div>}
     <div className="split"><section className="panel"><div className="panel-head"><div><h2>Price build-up</h2><div className="subtext">{rows.length} SKUs available · select one to analyze</div></div><select className="control" value={selected} onChange={(e) => setSelected(e.target.value)}>{rows.map((item) => <option key={item.sku_id} value={item.sku_id}>{item.sku_id} · {item.product_name}</option>)}</select></div>
       {row && sku ? <div className="panel-body"><div className="kpi-grid" style={{ gridTemplateColumns: "repeat(2,minmax(0,1fr))"}}><div className="agent-card"><div className="kpi-label">UNIT COST</div><div className="kpi-value">${sku.unit_cost.toFixed(2)}</div></div><div className="agent-card"><div className="kpi-label">CURRENT MARGIN</div><div className="kpi-value">{(row.current_margin_pct * 100).toFixed(1)}%</div></div><div className="agent-card"><div className="kpi-label">DS MODEL</div><div className="kpi-value">{row.proposed_pct.toFixed(1)}% <small className="muted">incl. macro</small></div></div><div className="agent-card"><div className="kpi-label">NEW LIST PRICE</div><div className="kpi-value positive">${row.new_lp.toFixed(2)}</div></div></div><div className="agent-card"><div className="agent-title">Recommendation evidence</div>{row.guardrail_flags.length ? row.guardrail_flags.map((flag) => <p key={flag.rule} className="subtext"><b className="warning">{flag.rule} · {flag.type}</b><br />{flag.msg}</p>) : <p className="subtext">No guardrail flags for this SKU.</p>}</div></div> : <div className="empty">No preview rows available for this project.</div>}
     </section><section className="panel"><div className="panel-head"><div><h2>Pricing Agent Chat</h2><div className="subtext">Ask why · challenge assumptions · request alternatives</div></div></div><div className="panel-body"><div style={{ minHeight: 280, maxHeight: 460, overflow: "auto", display: "grid", alignContent: "start", gap: 10 }}>{messages.length === 0 && <div className="empty">Try: “Why was this increase chosen?” or “What is the risk of this increase?”</div>}{messages.map((item, index) => <article className="agent-card" key={`${index}-${item.role}`}><div className="muted" style={{ fontSize: 9, marginBottom: 5 }}>{item.role === "user" ? "YOU" : "PRICING AGENT"}</div><div style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>{item.content || "…"}</div></article>)}</div><form onSubmit={send} className="inline" style={{ marginTop: 14 }}><input className="control" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Challenge a recommendation…" style={{ flex: 1 }} /><button className="button primary" disabled={loading || !question.trim()}>{loading ? "Thinking…" : "Send"}</button></form></div></section></div>
-  </main></>;
+  </main></WorkspaceShell>;
 }
