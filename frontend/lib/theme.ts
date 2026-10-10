@@ -1,6 +1,8 @@
 export type Theme = "dark" | "light";
 
-const STORAGE_KEY = "priceguardrail_theme";
+export const DEFAULT_THEME: Theme = "light";
+
+const STORAGE_KEY = "priceguard_theme";
 
 export function readStoredTheme(): Theme | null {
   if (typeof window === "undefined") return null;
@@ -11,11 +13,6 @@ export function readStoredTheme(): Theme | null {
     /* ignore */
   }
   return null;
-}
-
-export function readThemeFromDocument(): Theme {
-  if (typeof document === "undefined") return "light";
-  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
 export function applyTheme(theme: Theme) {
